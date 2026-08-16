@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Javascript Web Output #1</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 12px 10px;
+            background: white;
+            color: #111;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 8px 0 28px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+
+        #numberInput {
+            width: 145px;
+            height: 25px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button, select {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            padding: 2px 8px;
+            height: 24px;
+            box-sizing: border-box;
+        }
+
+        .top-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+        }
+
+        fieldset {
+            min-height: 75px;
+            padding: 10px 15px 14px;
+            margin: 0;
+        }
+
+        legend {
+            font-size: 17px;
+            padding: 0 3px;
+        }
+
+        #items {
+            min-height: 55px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            height: 26px;
+            font-size: 17px;
+        }
+
+        .number {
+            width: 78px;
+        }
+
+        .parity {
+            width: 78px;
+            font-weight: normal;
+        }
+
+        .even {
+            color: green;
+        }
+
+        .odd {
+            color: blue;
+        }
+
+        .item-row button {
+            margin-right: 5px;
+        }
+
+        .result {
+            font-size: 17px;
+            font-weight: bold;
+            margin-top: 9px;
+        }
+
+        .result span {
+            font-weight: normal;
+            text-decoration: underline;
+        }
+
+        .bottom-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            font-size: 17px;
+        }
+
+        #sortSelect {
+            margin-left: 0;
+            min-width: 105px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Javascript Web Output #1</h1>
+
+    <div class="input-row">
+        <label for="numberInput">Insert any Positive Numbers:</label>
+        <input type="number" id="numberInput" min="1" step="1">
+    </div>
+
+    <div class="top-buttons">
+        <button onclick="insertNumber()">Insert</button>
+        <button onclick="clearEntry()">Clear Entry</button>
+    </div>
+
+    <fieldset>
+        <legend>Inserted Numbers</legend>
+        <div id="items"></div>
+        <div id="results"></div>
+    </fieldset>
+
+    <div class="bottom-controls">
+        <button onclick="clearItems()">Clear Items</button>
+        <button onclick="getTotal()">Get Total</button>
+        <button onclick="identifyHighestLowest()">Identify Highest and Lowest Number</button>
+
+        <label for="sortSelect">Sort by:</label>
+        <select id="sortSelect" onchange="sortNumbers()">
+            <option value="">Please select</option>
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+        </select>
+    </div>
+
+    <script>
+        let numbers = [];
+        let showTotal = false;
+        let showHighestLowest = false;
+
+        const input = document.getElementById("numberInput");
+        const itemsContainer = document.getElementById("items");
+        const resultsContainer = document.getElementById("results");
+
+        function insertNumber() {
+            const value = Number(input.value);
+
+            if (!Number.isInteger(value) || value <= 0) {
+                alert("Please enter a positive number.");
+                return;
+            }
+
+            numbers.push(value);
+            input.value = "";
+            input.focus();
+
+            showTotal = false;
+            showHighestLowest = false;
+            render();
+        }
+
+        function clearEntry() {
+            input.value = "";
+            input.focus();
+        }
+
+        function render() {
+            itemsContainer.innerHTML = "";
+
+            numbers.forEach((num, index) => {
+                const row = document.createElement("div");
+                row.className = "item-row";
+
+                const number = document.createElement("span");
+                number.className = "number";
+                number.textContent = num;
+
+                const parity = document.createElement("span");
+                parity.className = "parity " + (num % 2 === 0 ? "even" : "odd");
+                parity.textContent = num % 2 === 0 ? "EVEN" : "ODD";
+
+                const removeButton = document.createElement("button");
+                removeButton.textContent = "Remove";
+                removeButton.onclick = () => removeNumber(index);
+
+                const editButton = document.createElement("button");
+                editButton.textContent = "Edit";
+                editButton.onclick = () => editNumber(index);
+
+                row.appendChild(number);
+                row.appendChild(parity);
+                row.appendChild(removeButton);
+                row.appendChild(editButton);
+
+                itemsContainer.appendChild(row);
+            });
+
+            renderResults();
+        }
+
+        function removeNumber(index) {
+            numbers.splice(index, 1);
+            showTotal = false;
+            showHighestLowest = false;
+            render();
+        }
+
+        function editNumber(index) {
+            const newValue = prompt("Enter new number:", numbers[index]);
+
+            if (newValue === null) return;
+
+            const value = Number(newValue);
+
+            if (!Number.isInteger(value) || value <= 0) {
+                alert("Please enter a positive number.");
+                return;
+            }
+
+            numbers[index] = value;
+            showTotal = false;
+            showHighestLowest = false;
+            render();
+        }
+
+        function clearItems() {
+            numbers = [];
+            showTotal = false;
+            showHighestLowest = false;
+            document.getElementById("sortSelect").value = "";
+            render();
+        }
+
+        function getTotal() {
+            if (numbers.length === 0) {
+                alert("There are no numbers to total.");
+                return;
+            }
+
+            showTotal = true;
+            renderResults();
+        }
+
+        function identifyHighestLowest() {
+            if (numbers.length === 0) {
+                alert("There are no numbers.");
+                return;
+            }
+
+            showHighestLowest = true;
+            renderResults();
+        }
+
+        function renderResults() {
+            resultsContainer.innerHTML = "";
+
+            if (numbers.length === 0) return;
+
+            if (showHighestLowest) {
+                const highest = Math.max(...numbers);
+                const lowest = Math.min(...numbers);
+
+                const high = document.createElement("div");
+                high.className = "result";
+                high.innerHTML = `HIGHEST <span>${highest}</span>`;
+
+                const low = document.createElement("div");
+                low.className = "result";
+                low.innerHTML = `LOWEST <span>${lowest}</span>`;
+
+                resultsContainer.appendChild(high);
+                resultsContainer.appendChild(low);
+            }
+
+            if (showTotal) {
+                const total = numbers.reduce((sum, num) => sum + num, 0);
+
+                const totalRow = document.createElement("div");
+                totalRow.className = "result";
+                totalRow.innerHTML = `TOTAL &nbsp;&nbsp; <span>${total}</span>`;
+
+                resultsContainer.appendChild(totalRow);
+            }
+        }
+
+        function sortNumbers() {
+            const order = document.getElementById("sortSelect").value;
+
+            if (order === "asc") {
+                numbers.sort((a, b) => a - b);
+            } else if (order === "desc") {
+                numbers.sort((a, b) => b - a);
+            }
+
+            render();
+        }
+
+        input.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                insertNumber();
+            }
+        });
+
+        render();
+    </script>
+
+</body>
+</html>
